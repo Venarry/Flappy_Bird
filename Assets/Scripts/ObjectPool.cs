@@ -1,41 +1,40 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class ObjectPool : MonoBehaviour
+public abstract class ObjectPool<T> where T : MonoBehaviour
 {
-    [SerializeField] private Transform _container;
-    [SerializeField] private Pipe _prefab;
+    private readonly List<T> _pool = new();
 
-    private Queue<Pipe> _pool;
-
-    public IEnumerable<Pipe> PooledObjects => _pool;
-
-    private void Awake()
+    public T Spawn(Vector2 position, Quaternion rotation)
     {
-        _pool = new Queue<Pipe>();
-    }
+        T spawnedObject = _pool.FirstOrDefault(c => c.isActiveAndEnabled == false);
 
-    public Pipe GetObject()
-    {
-        if (_pool.Count == 0)
+        if (spawnedObject == null)
         {
-            var pipe = Instantiate(_prefab);
-            pipe.transform.parent = _container;
+            spawnedObject = Object.Instantiate(GetPrefab(), position, rotation);
+            _pool.Add(spawnedObject);
 
-            return pipe;
+            return spawnedObject;
+        }
+        else
+        {
+            spawnedObject.gameObject.SetActive(true);
+            spawnedObject.transform.SetPositionAndRotation(position, rotation);
         }
 
-        return _pool.Dequeue();
+        return spawnedObject;
     }
 
-    public void PutObject(Pipe pipe)
+    public void RemoveAll()
     {
-        _pool.Enqueue(pipe);
-        pipe.gameObject.SetActive(false);
-    }
+        foreach (T enemy in _pool)
+        {
+            Object.Destroy(enemy.gameObject);
+        }
 
-    public void Reset()
-    {
         _pool.Clear();
     }
+
+    protected abstract T GetPrefab();
 }

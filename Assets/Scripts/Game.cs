@@ -4,9 +4,12 @@ using UnityEngine;
 public class Game : MonoBehaviour
 {
     [SerializeField] private Bird _bird;
-    [SerializeField] private PipeGenerator _pipeGenerator;
+    [SerializeField] private BirdAttack _birdAttack;
+    [SerializeField] private EnemyGenerator _enemyGenerator;
     [SerializeField] private StartScreen _startScreen;
     [SerializeField] private EndGameScreen _endGameScreen;
+
+    private BulletPool _bulletPool;
 
     private void OnEnable()
     {
@@ -20,6 +23,17 @@ public class Game : MonoBehaviour
         _startScreen.PlayButtonClicked -= OnPlayButtonClick;
         _endGameScreen.RestartButtonClicked -= OnRestartButtonClick;
         _bird.GameOver -= OnGameOver;
+    }
+
+    private void Awake()
+    {
+        EnemyPool enemyPool = new();
+        _bulletPool = new();
+        int playerTeamIndex = 0;
+        int enemyTeamIndex = 1;
+
+        _birdAttack.Init(_bulletPool, playerTeamIndex);
+        _enemyGenerator.Init(enemyPool, _bulletPool, enemyTeamIndex);
     }
 
     private void Start()
@@ -49,5 +63,7 @@ public class Game : MonoBehaviour
     {
         Time.timeScale = 1;
         _bird.Reset();
+        _enemyGenerator.RemovePipes();
+        _bulletPool.RemoveAll();
     }
 }
